@@ -107,7 +107,7 @@ If interactive mode is enabled, any arguments sent on the command line will be i
 
 I've separated the q3rcon package from the CLI precisely so that you can write your own implementation, since I don't know the target game or it's commands. For example, in my case I've added terminal colouring and reformatted some of the command responses.
 
-## `Logging`
+## Logging
 
 Log level may be set by passing the `-l` flag with a number from 0 up to 6 where
 
