@@ -7,7 +7,6 @@ import (
 
 	"github.com/onyx-and-iris/q3rcon/internal/conn"
 	"github.com/onyx-and-iris/q3rcon/internal/packet"
-	log "github.com/sirupsen/logrus"
 )
 
 // Option is a functional option type that allows us to configure the VbanTxt.
@@ -50,7 +49,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 	r := &Rcon{
 		conn:           conn,
 		request:        packet.NewRequest(password),
-		resp:           make(chan string, 1),
+		resp:           make(chan string),
 		defaultTimeout: 20 * time.Millisecond,
 		timeouts:       make(map[string]time.Duration),
 	}
@@ -97,14 +96,19 @@ func (r Rcon) Send(cmd string) (string, error) {
 		timeout = r.defaultTimeout
 	}
 
-	go r.conn.Listen(timeout, r.resp)
+	e := make(chan error)
+	go r.conn.Listen(timeout, r.resp, e)
 	_, err := r.conn.Write(r.request.Encode(cmd))
 	if err != nil {
 		return "", err
 	}
-	log.Tracef("Sending '%s'", cmd)
 
-	return strings.TrimPrefix(<-r.resp, string(r.response.Header())), nil
+	select {
+	case err := <-e:
+		return "", err
+	case resp := <-r.resp:
+		return strings.TrimPrefix(resp, string(r.response.Header())), nil
+	}
 }
 
 func (r Rcon) Close() {

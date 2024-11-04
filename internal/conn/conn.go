@@ -42,15 +42,15 @@ func (c UDPConn) Write(buf []byte) (int, error) {
 	return n, nil
 }
 
-func (c UDPConn) Listen(timeout time.Duration, resp chan<- string) {
+func (c UDPConn) Listen(timeout time.Duration, resp chan<- string, errChan chan<- error) {
 	c.conn.SetReadDeadline(time.Now().Add(timeout))
-	ch := make(chan struct{})
+	done := make(chan struct{})
 	var sb strings.Builder
 	buf := make([]byte, 2048)
 
 	for {
 		select {
-		case <-ch:
+		case <-done:
 			resp <- sb.String()
 			return
 		default:
@@ -59,13 +59,14 @@ func (c UDPConn) Listen(timeout time.Duration, resp chan<- string) {
 				e, ok := err.(net.Error)
 				if ok {
 					if e.Timeout() {
-						close(ch)
+						close(done)
 					} else {
-						log.Error(e)
+						errChan <- e
+						return
 					}
 				}
 			}
-			if rlen == 0 {
+			if rlen < len(c.response.Header()) {
 				continue
 			}
 
