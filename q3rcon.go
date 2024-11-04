@@ -12,13 +12,21 @@ import (
 // Option is a functional option type that allows us to configure the VbanTxt.
 type Option func(*Rcon)
 
+// WithLoginTimeout is a functional option to set the login timeout
+func WithLoginTimeout(timeout time.Duration) Option {
+	return func(rcon *Rcon) {
+		rcon.loginTimeout = timeout
+	}
+}
+
+// WithDefaultTimeout is a functional option to set the default response timeout
 func WithDefaultTimeout(timeout time.Duration) Option {
 	return func(rcon *Rcon) {
 		rcon.defaultTimeout = timeout
 	}
 }
 
-// WithTimeouts is a functional option to set the timeouts for responses
+// WithTimeouts is a functional option to set the timeouts for responses per command
 func WithTimeouts(timeouts map[string]time.Duration) Option {
 	return func(rcon *Rcon) {
 		rcon.timeouts = timeouts
@@ -30,6 +38,7 @@ type Rcon struct {
 	request  packet.Request
 	response packet.Response
 
+	loginTimeout   time.Duration
 	defaultTimeout time.Duration
 	timeouts       map[string]time.Duration
 
@@ -50,6 +59,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 		conn:           conn,
 		request:        packet.NewRequest(password),
 		resp:           make(chan string),
+		loginTimeout:   5 * time.Second,
 		defaultTimeout: 20 * time.Millisecond,
 		timeouts:       make(map[string]time.Duration),
 	}
@@ -58,8 +68,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 		o(r)
 	}
 
-	err = r.Login()
-	if err != nil {
+	if err = r.Login(); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +76,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 }
 
 func (r Rcon) Login() error {
-	timeout := time.After(2 * time.Second)
+	timeout := time.After(r.loginTimeout)
 	for {
 		select {
 		case <-timeout:

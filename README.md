@@ -52,6 +52,16 @@ func main() {
 }
 ```
 
+#### `WithLoginTimeout(timeout time.Duration)`
+
+If the server was just started or is currently performing a long operation like map rotating then it's possible to receive empty rcon responses. In which case you'll want to retry login. Use this functional option to set the max timeout for logins, it defaults to 5 seconds. For example:
+
+```go
+rcon, err := q3rcon.New(
+	host, port, password,
+	q3rcon.WithLoginTimeout(2*time.Second))
+```
+
 #### `WithDefaultTimeout(timeout time.Duration)`
 
 You may want to change the default timeout if some of your responses are getting mixed together (stability can depend on connection to the server). For example, on LAN I can leave the default at 20ms, when connecting remotely I normally increase this to 50ms.
