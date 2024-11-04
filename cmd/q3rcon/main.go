@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -15,6 +16,12 @@ import (
 )
 
 var interactive bool
+
+func exit(err error) {
+	_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+	flag.Usage()
+	os.Exit(1)
+}
 
 func main() {
 	var (
@@ -55,6 +62,11 @@ func main() {
 			log.Fatal(err)
 		}
 		return
+	}
+
+	if len(flag.Args()) == 0 {
+		err = errors.New("no rcon commands passed")
+		exit(err)
 	}
 
 	for _, arg := range flag.Args() {
