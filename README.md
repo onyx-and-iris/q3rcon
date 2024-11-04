@@ -117,10 +117,15 @@ If interactive mode is enabled, any arguments sent on the command line will be i
 
 ## Your own implementation
 
-I've separated the q3rcon package from the CLI precisely so that you can write your own implementation, since I don't know the target game or it's commands. For example, in my case I've added terminal colouring and reformatted some of the command responses.
+The included CLI is a generic implementation, while it can be used out of the box you may find that some requests result in fragmented responses. The solution is to implement your own version, adjusting the timings with the functional options as detailed above. I could have increased the default timeouts but that would add unnecessary delay for most requests, so I decided to leave those details to the users of the package.
+
+Since you can include the q3rcon package into your own package you can easily make your own modifications, for example, I added [colour to the terminal][status] and [reformatted some of the responses][mapname].
 
 ## Logging
 
 Log level may be set by passing the `-l` flag with a number from 0 up to 6 where
 
 0 = Panic, 1 = Fatal, 2 = Error, 3 = Warning, 4 = Info, 5 = Debug, 6 = Trace
+
+[status]: ./img/status.png
+[mapname]: ./img/mapname.png
