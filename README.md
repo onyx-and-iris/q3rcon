@@ -59,9 +59,9 @@ You may want to change the default timeout if some of your responses are getting
 For example:
 
 ```go
-	rcon, err := q3rcon.New(
-		host, port, password,
-		q3rcon.WithDefaultTimeout(50*time.Millisecond))
+rcon, err := q3rcon.New(
+	host, port, password,
+	q3rcon.WithDefaultTimeout(50*time.Millisecond))
 ```
 
 #### `WithTimeouts(timeouts map[string]time.Duration)`
@@ -69,14 +69,14 @@ For example:
 Perhaps there are some requests that take a long time to receive a response but you want the whole response in one chunk. Pass a timeouts map, for example:
 
 ```go
-	timeouts := map[string]time.Duration{
-		"map_rotate":  1200 * time.Millisecond,
-		"map_restart": 1200 * time.Millisecond,
-	}
+timeouts := map[string]time.Duration{
+	"map_rotate":  1200 * time.Millisecond,
+	"map_restart": 1200 * time.Millisecond,
+}
 
-	rcon, err := q3rcon.New(
-		host, port, password,
-		q3rcon.WithTimeouts(timeouts))
+rcon, err := q3rcon.New(
+	host, port, password,
+	q3rcon.WithTimeouts(timeouts))
 ```
 
 ## Command line
