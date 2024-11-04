@@ -95,13 +95,13 @@ Arguments following the flags will be sent as rcon commands. You may send multip
 
 #### Interactive mode
 
-Pass `interactive` flag to enable interactive mode, for example:
+Pass `interactive (-i shorthand)` flag to enable interactive mode, for example:
 
 ```
 q3rcon -h=localhost -p=30000 -P="rconpassword" -i
 ```
 
-If interactive mode is enabled, any arguments sent on the command lien will be ignored.
+If interactive mode is enabled, any arguments sent on the command line will be ignored.
 
 ## `Logging`
 
