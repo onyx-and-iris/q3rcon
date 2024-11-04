@@ -78,3 +78,33 @@ Perhaps there are some requests that take a long time to receive a response but 
 		host, port, password,
 		q3rcon.WithTimeouts(timeouts))
 ```
+
+## Command line
+
+Pass `host`, `port` and `password` as flags, for example:
+
+```
+q3rcon -h=localhost -p=30000 -P="rconpassword" "mapname"
+```
+
+-   `host` defaults to "localhost"
+-   `port` defaults to 28960
+-   `password` defaults to ""
+
+Arguments following the flags will be sent as rcon commands. You may send multiple arguments.
+
+#### Interactive mode
+
+Pass `interactive` flag to enable interactive mode, for example:
+
+```
+q3rcon -h=localhost -p=30000 -P="rconpassword" -i
+```
+
+If interactive mode is enabled, any arguments sent on the command lien will be ignored.
+
+## `Logging`
+
+Log level may be set by passing the `-l` flag with a number from 0 up to 6 where
+
+0 = Panic, 1 = Fatal, 2 = Error, 3 = Warning, 4 = Info, 5 = Debug, 6 = Trace
