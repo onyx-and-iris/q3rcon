@@ -68,8 +68,7 @@ func main() {
 }
 
 func connectRcon(host string, port int, password string) (*q3rcon.Rcon, error) {
-	rcon, err := q3rcon.New(
-		host, port, password)
+	rcon, err := q3rcon.New(host, port, password)
 	if err != nil {
 		return nil, err
 	}
