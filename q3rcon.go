@@ -1,7 +1,9 @@
 package q3rcon
 
 import (
+	"bytes"
 	"errors"
+	"net"
 	"strings"
 	"time"
 
@@ -9,29 +11,7 @@ import (
 	"github.com/onyx-and-iris/q3rcon/internal/packet"
 )
 
-// Option is a functional option type that allows us to configure the VbanTxt.
-type Option func(*Rcon)
-
-// WithLoginTimeout is a functional option to set the login timeout
-func WithLoginTimeout(timeout time.Duration) Option {
-	return func(rcon *Rcon) {
-		rcon.loginTimeout = timeout
-	}
-}
-
-// WithDefaultTimeout is a functional option to set the default response timeout
-func WithDefaultTimeout(timeout time.Duration) Option {
-	return func(rcon *Rcon) {
-		rcon.defaultTimeout = timeout
-	}
-}
-
-// WithTimeouts is a functional option to set the timeouts for responses per command
-func WithTimeouts(timeouts map[string]time.Duration) Option {
-	return func(rcon *Rcon) {
-		rcon.timeouts = timeouts
-	}
-}
+const respBufSiz = 2048
 
 type Rcon struct {
 	conn     conn.UDPConn
@@ -41,8 +21,6 @@ type Rcon struct {
 	loginTimeout   time.Duration
 	defaultTimeout time.Duration
 	timeouts       map[string]time.Duration
-
-	resp chan string
 }
 
 func New(host string, port int, password string, options ...Option) (*Rcon, error) {
@@ -56,9 +34,10 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 	}
 
 	r := &Rcon{
-		conn:           conn,
-		request:        packet.NewRequest(password),
-		resp:           make(chan string),
+		conn:     conn,
+		request:  packet.NewRequest(password),
+		response: packet.NewResponse(),
+
 		loginTimeout:   5 * time.Second,
 		defaultTimeout: 20 * time.Millisecond,
 		timeouts:       make(map[string]time.Duration),
@@ -105,18 +84,52 @@ func (r Rcon) Send(cmd string) (string, error) {
 		timeout = r.defaultTimeout
 	}
 
-	e := make(chan error)
-	go r.conn.Listen(timeout, r.resp, e)
+	respChan := make(chan string)
+	errChan := make(chan error)
+	go r.listen(timeout, respChan, errChan)
 	_, err := r.conn.Write(r.request.Encode(cmd))
 	if err != nil {
 		return "", err
 	}
 
 	select {
-	case err := <-e:
+	case err := <-errChan:
 		return "", err
-	case resp := <-r.resp:
+	case resp := <-respChan:
 		return strings.TrimPrefix(resp, string(r.response.Header())), nil
+	}
+}
+
+func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan<- error) {
+	done := make(chan struct{})
+	respBuf := make([]byte, respBufSiz)
+	var sb strings.Builder
+
+	for {
+		select {
+		case <-done:
+			respChan <- sb.String()
+			return
+		default:
+			rlen, err := r.conn.ReadUntil(time.Now().Add(timeout), respBuf)
+			if err != nil {
+				e, ok := err.(net.Error)
+				if ok {
+					if e.Timeout() {
+						close(done)
+					} else {
+						errChan <- e
+						return
+					}
+				}
+			}
+
+			if rlen > len(r.response.Header()) {
+				if bytes.HasPrefix(respBuf, r.response.Header()) {
+					sb.Write(respBuf[len(r.response.Header()):rlen])
+				}
+			}
+		}
 	}
 }
 
