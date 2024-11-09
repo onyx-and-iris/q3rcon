@@ -15,5 +15,5 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 ### Added
 
--   Initial release, package implements Rcon using the Q3 procotocl.
+-   Initial release, package implements Rcon using the Q3 protocol.
 -   A basic CLI implementation accepting configuration flags.
