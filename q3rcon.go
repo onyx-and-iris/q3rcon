@@ -86,7 +86,9 @@ func (r Rcon) Send(cmd string) (string, error) {
 
 	respChan := make(chan string)
 	errChan := make(chan error)
+
 	go r.listen(timeout, respChan, errChan)
+
 	_, err := r.conn.Write(r.request.Encode(cmd))
 	if err != nil {
 		return "", err
