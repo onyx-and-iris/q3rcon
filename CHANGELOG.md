@@ -11,6 +11,17 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.0.3] - 2024-11-24
+
+### Changed
+
+-   {Rcon}.login is no longer exported since it's called internally by the constructor.
+-   When checking the timeouts map the cmd is split from its arguments. This allows setting a timeout value for all `map mp_` for example.
+
+### Added
+
+-   Timeout values for commands in the timeouts map are now logged at Debug level.
+
 # [0.0.1] - 2024-11-04
 
 ### Added
