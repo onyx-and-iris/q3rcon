@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/onyx-and-iris/q3rcon/internal/conn"
 	"github.com/onyx-and-iris/q3rcon/internal/packet"
 )
@@ -47,14 +49,14 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 		o(r)
 	}
 
-	if err = r.Login(); err != nil {
+	if err = r.login(); err != nil {
 		return nil, err
 	}
 
 	return r, nil
 }
 
-func (r Rcon) Login() error {
+func (r Rcon) login() error {
 	timeout := time.After(r.loginTimeout)
 	for {
 		select {
@@ -78,10 +80,13 @@ func (r Rcon) Login() error {
 	}
 }
 
-func (r Rcon) Send(cmd string) (string, error) {
+func (r Rcon) Send(cmdWithArgs string) (string, error) {
+	cmd, _, _ := strings.Cut(string(cmdWithArgs), " ")
 	timeout, ok := r.timeouts[cmd]
 	if !ok {
 		timeout = r.defaultTimeout
+	} else {
+		log.Debugf("%s in timeouts map, using timeout %v", cmd, timeout)
 	}
 
 	respChan := make(chan string)
@@ -89,7 +94,7 @@ func (r Rcon) Send(cmd string) (string, error) {
 
 	go r.listen(timeout, respChan, errChan)
 
-	_, err := r.conn.Write(r.request.Encode(cmd))
+	_, err := r.conn.Write(r.request.Encode(cmdWithArgs))
 	if err != nil {
 		return "", err
 	}
@@ -98,7 +103,7 @@ func (r Rcon) Send(cmd string) (string, error) {
 	case err := <-errChan:
 		return "", err
 	case resp := <-respChan:
-		return strings.TrimPrefix(resp, string(r.response.Header())), nil
+		return resp, nil
 	}
 }
 
