@@ -92,7 +92,7 @@ func interactiveMode(rcon *q3rcon.Rcon, input io.Reader) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		cmd := scanner.Text()
-		if strings.ToUpper(cmd) == "Q" {
+		if strings.EqualFold(cmd, "Q") {
 			return nil
 		}
 
