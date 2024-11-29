@@ -129,3 +129,10 @@ Log level may be set by passing the `-l` flag with a number from 0 up to 6 where
 
 [status]: ./img/status.png
 [mapname]: ./img/mapname.png
+
+## Further Notes
+
+This rcon client is fully compatible with the [Q3 Rcon Proxy][q3rcon-proxy] package.
+
+
+[q3rcon-proxy]: https://github.com/onyx-and-iris/q3rcon-proxy/tree/dev
