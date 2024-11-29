@@ -11,6 +11,12 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.1.0] - 2024-11-29
+
+### Changed
+
+-   `-P` flag changed to `-r` for setting rcon password. This is to disambiguate it from the port (-p) flag.
+
 # [0.0.3] - 2024-11-24
 
 ### Changed
