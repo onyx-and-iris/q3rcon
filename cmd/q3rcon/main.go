@@ -27,7 +27,7 @@ func main() {
 	var (
 		host     string
 		port     int
-		password string
+		rconpass string
 		loglevel int
 	)
 
@@ -35,8 +35,8 @@ func main() {
 	flag.StringVar(&host, "h", "localhost", "hostname of the server (shorthand)")
 	flag.IntVar(&port, "port", 28960, "port of the server")
 	flag.IntVar(&port, "p", 28960, "port of the server (shorthand)")
-	flag.StringVar(&password, "password", "", "rcon password")
-	flag.StringVar(&password, "P", "", "rcon password (shorthand)")
+	flag.StringVar(&rconpass, "rconpass", "", "rcon password")
+	flag.StringVar(&rconpass, "r", "", "rcon password (shorthand)")
 
 	flag.BoolVar(&interactive, "interactive", false, "run in interactive mode")
 	flag.BoolVar(&interactive, "i", false, "run in interactive mode")
@@ -49,7 +49,7 @@ func main() {
 		log.SetLevel(log.Level(loglevel))
 	}
 
-	rcon, err := connectRcon(host, port, password)
+	rcon, err := connectRcon(host, port, rconpass)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -93,15 +93,15 @@ rcon, err := q3rcon.New(
 
 ## Command line
 
-Pass `host`, `port` and `password` as flags, for example:
+Pass `host`, `port` and `rconpass` as flags, for example:
 
 ```
-q3rcon -h=localhost -p=30000 -P="rconpassword" "mapname"
+q3rcon -h=localhost -p=30000 -r="rconpassword" "mapname"
 ```
 
 -   `host` defaults to "localhost"
 -   `port` defaults to 28960
--   `password` defaults to ""
+-   `rconpass` defaults to ""
 
 Arguments following the flags will be sent as rcon commands. You may send multiple arguments.
 
@@ -110,7 +110,7 @@ Arguments following the flags will be sent as rcon commands. You may send multip
 Pass `interactive (-i shorthand)` flag to enable interactive mode, for example:
 
 ```
-q3rcon -h=localhost -p=30000 -P="rconpassword" -i
+q3rcon -h=localhost -p=30000 -r="rconpassword" -i
 ```
 
 If interactive mode is enabled, any arguments sent on the command line will be ignored.
