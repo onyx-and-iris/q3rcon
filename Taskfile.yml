@@ -12,13 +12,12 @@ vars:
 
 tasks:
   default:
-    desc: "Build the Go project"
+    desc: "Build the q3rcon project"
     deps: [build]
 
-  fmt:
-    desc: "Fmt the code"
-    cmds:
-      - go fmt ./...
+  build:
+    desc: "Build the q3rcon project"
+    deps: [vet, build-windows, build-linux]
 
   vet:
     desc: "Vet the code"
@@ -26,9 +25,10 @@ tasks:
     cmds:
       - go vet ./...
 
-  build:
-    desc: "Build the q3rcon project"
-    deps: [vet, build-windows, build-linux]
+  fmt:
+    desc: "Fmt the code"
+    cmds:
+      - go fmt ./...
 
   build-windows:
     desc: "Build the q3rcon project for Windows"
