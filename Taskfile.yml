@@ -1,0 +1,51 @@
+version: '3'
+
+vars:
+  PROGRAM: q3rcon
+  SHELL: '{{if eq .OS "Windows_NT"}}powershell{{end}}'
+  BIN_DIR: bin
+
+  WINDOWS: '{{.BIN_DIR}}/{{.PROGRAM}}_windows_amd64.exe'
+  LINUX: '{{.BIN_DIR}}/{{.PROGRAM}}_linux_amd64'
+  GIT_COMMIT:
+    sh: git log -n 1 --format=%h
+
+tasks:
+  default:
+    desc: "Build the Go project"
+    deps: [build]
+
+  fmt:
+    desc: "Fmt the code"
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: "Vet the code"
+    deps: [fmt]
+    cmds:
+      - go vet ./...
+
+  build:
+    desc: "Build the q3rcon project"
+    deps: [vet, build-windows, build-linux]
+
+  build-windows:
+    desc: "Build the q3rcon project for Windows"
+    cmds:
+      - GOOS=windows GOARCH=amd64 go build -o {{.WINDOWS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+
+  build-linux:
+    desc: "Build the q3rcon project for Linux"
+    cmds:
+      - GOOS=linux GOARCH=amd64 go build -o {{.LINUX}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - go test ./...
+
+  clean:
+    desc: "Clean the build artifacts"
+    cmds:
+      - '{{.SHELL}} rm -r {{.BIN_DIR}}'

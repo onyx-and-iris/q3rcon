@@ -1,11 +1,11 @@
-program = q3rcon
+PROGRAM = q3rcon
 
 GO = @go
 BIN_DIR := bin
 
-WINDOWS=$(BIN_DIR)/$(program)_windows_amd64.exe
-LINUX=$(BIN_DIR)/$(program)_linux_amd64
-VERSION=$(shell git describe --tags --always --long --dirty)
+WINDOWS=$(BIN_DIR)/$(PROGRAM)_windows_amd64.exe
+LINUX=$(BIN_DIR)/$(PROGRAM)_linux_amd64
+VERSION=$(shell git log -n 1 --format=%h)
 
 .DEFAULT_GOAL := build
 
@@ -25,10 +25,10 @@ linux: $(LINUX)
 
 
 $(WINDOWS):
-	env GOOS=windows GOARCH=amd64 go build -v -o $(WINDOWS) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/q3rcon/
+	env GOOS=windows GOARCH=amd64 go build -v -o $(WINDOWS) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/$(PROGRAM)/
 
 $(LINUX):
-	env GOOS=linux GOARCH=amd64 go build -v -o $(LINUX) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/q3rcon/
+	env GOOS=linux GOARCH=amd64 go build -v -o $(LINUX) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/$(PROGRAM)/
 
 test:
 	$(GO) test ./...
