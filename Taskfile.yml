@@ -12,40 +12,44 @@ vars:
 
 tasks:
   default:
-    desc: "Build the q3rcon project"
-    deps: [build]
+    desc: Build the q3rcon project
+    cmds:
+      - task: build
 
   build:
-    desc: "Build the q3rcon project"
-    deps: [vet, build-windows, build-linux]
+    desc: Build the q3rcon project
+    deps: [vet]
+    cmds:
+      - task: build-windows
+      - task: build-linux
 
   vet:
-    desc: "Vet the code"
+    desc: Vet the code
     deps: [fmt]
     cmds:
       - go vet ./...
 
   fmt:
-    desc: "Fmt the code"
+    desc: Fmt the code
     cmds:
       - go fmt ./...
 
   build-windows:
-    desc: "Build the q3rcon project for Windows"
+    desc: Build the q3rcon project for Windows
     cmds:
       - GOOS=windows GOARCH=amd64 go build -o {{.WINDOWS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
 
   build-linux:
-    desc: "Build the q3rcon project for Linux"
+    desc: Build the q3rcon project for Linux
     cmds:
       - GOOS=linux GOARCH=amd64 go build -o {{.LINUX}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
 
   test:
-    desc: "Run tests"
+    desc: Run tests
     cmds:
       - go test ./...
 
   clean:
-    desc: "Clean the build artifacts"
+    desc: Clean the build artifacts
     cmds:
       - '{{.SHELL}} rm -r {{.BIN_DIR}}'
