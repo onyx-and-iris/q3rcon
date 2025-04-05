@@ -11,6 +11,19 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.3.0] - 2025-04-05
+
+### Changed
+
+-   `-loglevel` flag is now of type string. It accepts any one of trace, debug, info, warn, error, fatal or panic.
+    -   It defaults to warn.
+
+# [0.2.0] - 2025-02-03
+
+### Added
+
+-   If neither the interactive flag is passed or any command line arguments then a *rcon status* command will be run.
+
 # [0.1.0] - 2024-11-29
 
 ### Changed

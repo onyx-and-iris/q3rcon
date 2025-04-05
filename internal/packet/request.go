@@ -3,6 +3,8 @@ package packet
 import (
 	"bytes"
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const bufSz = 512
@@ -29,5 +31,6 @@ func (r Request) Encode(cmd string) []byte {
 	r.buf.Reset()
 	r.buf.Write(r.Header())
 	r.buf.WriteString(fmt.Sprintf(" %s %s", r.password, cmd))
+	log.Tracef("Encoded request: %s", r.buf.String())
 	return r.buf.Bytes()
 }

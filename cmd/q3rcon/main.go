@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/onyx-and-iris/q3rcon"
@@ -25,7 +24,7 @@ func main() {
 		port        int
 		rconpass    string
 		interactive bool
-		loglevel    int
+		loglevel    string
 	)
 
 	flag.StringVar(&host, "host", "localhost", "hostname of the gameserver")
@@ -38,13 +37,16 @@ func main() {
 	flag.BoolVar(&interactive, "interactive", false, "run in interactive mode")
 	flag.BoolVar(&interactive, "i", false, "run in interactive mode")
 
-	flag.IntVar(&loglevel, "loglevel", int(log.WarnLevel), "log level")
-	flag.IntVar(&loglevel, "l", int(log.WarnLevel), "log level (shorthand)")
+	flag.StringVar(&loglevel, "loglevel", "warn", "log level")
+	flag.StringVar(&loglevel, "l", "warn", "log level (shorthand)")
+
 	flag.Parse()
 
-	if slices.Contains(log.AllLevels, log.Level(loglevel)) {
-		log.SetLevel(log.Level(loglevel))
+	level, err := log.ParseLevel(loglevel)
+	if err != nil {
+		exitOnError(fmt.Errorf("invalid log level: %s", loglevel))
 	}
+	log.SetLevel(level)
 
 	if port < 1024 || port > 65535 {
 		exitOnError(fmt.Errorf("invalid port value, got: (%d) expected: in range 1024-65535", port))

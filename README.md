@@ -109,7 +109,7 @@ Arguments following the flags will be sent as rcon commands. You may send multip
 
 Pass `interactive (-i shorthand)` flag to enable interactive mode, for example:
 
-```
+```bash
 q3rcon -h=localhost -p=30000 -r="rconpassword" -i
 ```
 
@@ -123,16 +123,31 @@ Since you can include the q3rcon package into your own package you can easily ma
 
 ## Logging
 
-Log level may be set by passing the `-l` flag with a number from 0 up to 6 where
+The `-loglevel` flag allows you to control the verbosity of the application's logging output. 
 
-0 = Panic, 1 = Fatal, 2 = Error, 3 = Warning, 4 = Info, 5 = Debug, 6 = Trace
+Acceptable values for this flag are:
 
-[status]: ./img/status.png
-[mapname]: ./img/mapname.png
+- `trace`
+- `debug`
+- `info`
+- `warn`
+- `error`
+- `fatal`
+- `panic`
+
+For example, to set the log level to `debug`, you can use:
+
+```bash
+q3rcon -p=28960 -r="rconpassword" -loglevel=debug -i
+```
+
+The default log level is `warn` if the flag is not specified.
 
 ## Further Notes
 
 This rcon client is fully compatible with the [Q3 Rcon Proxy][q3rcon-proxy] package.
 
 
+[status]: ./img/status.png
+[mapname]: ./img/mapname.png
 [q3rcon-proxy]: https://github.com/onyx-and-iris/q3rcon-proxy/tree/dev
