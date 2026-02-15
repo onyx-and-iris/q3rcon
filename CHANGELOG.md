@@ -11,6 +11,18 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.4.0] - 2026-02-15
+
+### Added
+
+- macos build to releases
+
+### Changed
+
+- exitOnError() removed in favour of a [deferred exit function](https://github.com/onyx-and-iris/q3rcon/blob/cd15e8983726177d6edd985a8bf3d7f4e0d7f346/cmd/q3rcon/main.go#L21), this ensures the closer() cleanup function is always called.
+- the included CLI now uses a [timeouts map](https://github.com/onyx-and-iris/q3rcon/blob/cd15e8983726177d6edd985a8bf3d7f4e0d7f346/cmd/q3rcon/main.go#L109).
+    -   even though this is only an example implementation it should still be basically usable.
+
 # [0.3.0] - 2025-04-05
 
 ### Changed
