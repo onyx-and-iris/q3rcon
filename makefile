@@ -5,30 +5,35 @@ BIN_DIR := bin
 
 WINDOWS=$(BIN_DIR)/$(PROGRAM)_windows_amd64.exe
 LINUX=$(BIN_DIR)/$(PROGRAM)_linux_amd64
+MACOS=$(BIN_DIR)/$(PROGRAM)_darwin_amd64
 VERSION=$(shell git log -n 1 --format=%h)
 
 .DEFAULT_GOAL := build
 
-.PHONY: fmt vet build windows linux test clean
+.PHONY: fmt vet build windows linux macos test clean
 fmt:        
 	$(GO) fmt ./...
 
 vet: fmt        
 	$(GO) vet ./...
 
-build: vet windows linux | $(BIN_DIR)
+build: vet windows linux macos | $(BIN_DIR)
 	@echo version: $(VERSION)
 
 windows: $(WINDOWS)
 
 linux: $(LINUX)
 
+macos: $(MACOS)
 
 $(WINDOWS):
 	env GOOS=windows GOARCH=amd64 go build -v -o $(WINDOWS) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/$(PROGRAM)/
 
 $(LINUX):
 	env GOOS=linux GOARCH=amd64 go build -v -o $(LINUX) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/$(PROGRAM)/
+
+$(MACOS):
+	env GOOS=darwin GOARCH=amd64 go build -v -o $(MACOS) -ldflags="-s -w -X main.version=$(VERSION)"  ./cmd/$(PROGRAM)/
 
 test:
 	$(GO) test ./...

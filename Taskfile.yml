@@ -7,6 +7,7 @@ vars:
 
   WINDOWS: '{{.BIN_DIR}}/{{.PROGRAM}}_windows_amd64.exe'
   LINUX: '{{.BIN_DIR}}/{{.PROGRAM}}_linux_amd64'
+  MACOS: '{{.BIN_DIR}}/{{.PROGRAM}}_darwin_amd64'
   GIT_COMMIT:
     sh: git log -n 1 --format=%h
 
@@ -22,6 +23,7 @@ tasks:
     cmds:
       - task: build-windows
       - task: build-linux
+      - task: build-macos
 
   vet:
     desc: Vet the code
@@ -38,11 +40,19 @@ tasks:
     desc: Build the q3rcon project for Windows
     cmds:
       - GOOS=windows GOARCH=amd64 go build -o {{.WINDOWS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+    internal: true
 
   build-linux:
     desc: Build the q3rcon project for Linux
     cmds:
       - GOOS=linux GOARCH=amd64 go build -o {{.LINUX}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+    internal: true
+
+  build-macos:
+    desc: Build the q3rcon project for macOS
+    cmds:
+      - GOOS=darwin GOARCH=amd64 go build -o {{.MACOS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+    internal: true
 
   test:
     desc: Run tests
