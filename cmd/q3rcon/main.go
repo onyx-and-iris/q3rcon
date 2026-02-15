@@ -8,17 +8,33 @@ import (
 	"os"
 	"strings"
 
-	"github.com/onyx-and-iris/q3rcon"
-
 	log "github.com/sirupsen/logrus"
+
+	"github.com/onyx-and-iris/q3rcon"
 )
 
-func exitOnError(err error) {
-	_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-	os.Exit(1)
+func main() {
+	var exitCode int
+
+	// Defer exit with the final exit code
+	defer func() {
+		if exitCode != 0 {
+			os.Exit(exitCode)
+		}
+	}()
+
+	closer, err := run()
+	if closer != nil {
+		defer closer()
+	}
+	if err != nil {
+		log.Error(err)
+		exitCode = 1
+	}
 }
 
-func main() {
+// run executes the main logic of the application and returns a cleanup function and an error if any.
+func run() (func(), error) {
 	var (
 		host        string
 		port        int
@@ -30,9 +46,19 @@ func main() {
 	flag.StringVar(&host, "host", "localhost", "hostname of the gameserver")
 	flag.StringVar(&host, "h", "localhost", "hostname of the gameserver (shorthand)")
 	flag.IntVar(&port, "port", 28960, "port on which the gameserver resides, default is 28960")
-	flag.IntVar(&port, "p", 28960, "port on which the gameserver resides, default is 28960 (shorthand)")
+	flag.IntVar(
+		&port,
+		"p",
+		28960,
+		"port on which the gameserver resides, default is 28960 (shorthand)",
+	)
 	flag.StringVar(&rconpass, "rconpass", os.Getenv("RCON_PASS"), "rcon password of the gameserver")
-	flag.StringVar(&rconpass, "r", os.Getenv("RCON_PASS"), "rcon password of the gameserver (shorthand)")
+	flag.StringVar(
+		&rconpass,
+		"r",
+		os.Getenv("RCON_PASS"),
+		"rcon password of the gameserver (shorthand)",
+	)
 
 	flag.BoolVar(&interactive, "interactive", false, "run in interactive mode")
 	flag.BoolVar(&interactive, "i", false, "run in interactive mode")
@@ -44,34 +70,38 @@ func main() {
 
 	level, err := log.ParseLevel(loglevel)
 	if err != nil {
-		exitOnError(fmt.Errorf("invalid log level: %s", loglevel))
+		return nil, fmt.Errorf("invalid log level: %s", loglevel)
 	}
 	log.SetLevel(level)
 
 	if port < 1024 || port > 65535 {
-		exitOnError(fmt.Errorf("invalid port value, got: (%d) expected: in range 1024-65535", port))
+		return nil, fmt.Errorf("invalid port value, got: (%d) expected: in range 1024-65535", port)
 	}
 
 	if len(rconpass) < 8 {
-		exitOnError(fmt.Errorf("invalid rcon password, got: (%s) expected: at least 8 characters", rconpass))
+		return nil, fmt.Errorf(
+			"invalid rcon password, got: (%s) expected: at least 8 characters",
+			rconpass,
+		)
 	}
 
 	rcon, err := connectRcon(host, port, rconpass)
 	if err != nil {
-		exitOnError(err)
+		return nil, err
 	}
 	defer rcon.Close()
 
 	if !interactive {
 		runCommands(flag.Args(), rcon)
-		return
+		return nil, nil
 	}
 
 	fmt.Printf("Enter 'Q' to exit.\n>> ")
 	err = interactiveMode(rcon, os.Stdin)
 	if err != nil {
-		exitOnError(err)
+		return nil, err
 	}
+	return nil, nil
 }
 
 func connectRcon(host string, port int, password string) (*q3rcon.Rcon, error) {
