@@ -1,0 +1,142 @@
+version: '2'
+
+run:
+  timeout: 3m
+  tests: true
+  go: '1.24'
+
+linters:
+  disable: [errcheck, errorlint, godot, revive, staticcheck]
+  enable:
+    # Default enabled linters
+    - errcheck # Check for unchecked errors
+    - govet # Go's built-in vetting tool
+    - ineffassign # Detect ineffectual assignments
+    - staticcheck # Advanced static analysis
+    - unused # Check for unused code
+    # Additional useful linters
+    - misspell # Detect common misspellings
+    - unparam # Check for unused function parameters
+    - gosec # Security checks
+    - asciicheck # Check for non-ASCII characters
+    - errname # Check error variable names
+    - godot # Check for missing periods in comments
+    - revive # Highly configurable linter for style and correctness
+    - gocritic # Detect code issues and suggest improvements
+    - gocyclo # Check for cyclomatic complexity
+    - dupl # Check for code duplication
+    - predeclared # Check for shadowing of predeclared identifiers
+    - copyloopvar # Check for loop variable capture in goroutines
+    - errorlint # Check for common mistakes in error handling
+    - goconst # Check for repeated strings that could be constants
+    - gosmopolitan # Check for non-portable code
+
+  settings:
+    misspell:
+      locale: UK
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Printf
+        - fmt.Println
+        - fmt.Errorf
+
+    revive:
+      severity: warning
+      rules:
+        # Code quality and style
+        - name: exported
+          arguments:
+            - 'checkPrivateReceivers'
+            - 'sayRepetitiveInsteadOfStutters'
+        - name: var-naming
+        - name: package-comments
+        - name: range-val-in-closure
+        - name: time-naming
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: blank-imports
+        - name: range
+
+        # Disabled rules (can be enabled if needed)
+        # - name: line-length-limit
+        #   arguments: [120]
+        # - name: function-length
+        #   arguments: [50, 0]
+        # - name: cyclomatic
+        #   arguments: [10]
+
+    gosec:
+      excludes:
+        - G104 # Duplicated errcheck checks
+        - G115 # integer overflow conversion int -> uint32
+
+  exclusions:
+    warn-unused: false
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+
+    paths:
+      - vendor
+
+# Formatters configuration
+formatters:
+  # Enable specific formatters
+  enable:
+    - gofumpt # Stricter gofmt alternative
+    - goimports # Organizes imports
+    - gci # Controls import order/grouping
+    - golines # Enforces line length
+
+  # Formatter-specific settings
+  settings:
+    goimports:
+      local-prefixes: [github.com/onyx-and-iris/q3rcon]
+
+    gci:
+      # Define import sections order
+      sections:
+        - standard # Standard library
+        - default # Everything else
+        - prefix(github.com/onyx-and-iris/q3rcon) # Current module
+
+    gofumpt:
+      extra-rules: true # Enable additional formatting rules
+
+  exclusions:
+    warn-unused: true
+
+    paths:
+      - vendor
+
+issues:
+  # Limit the number of same issues reported to avoid spam
+  max-same-issues: 50
+
+  # Limit the number of issues per linter to keep output manageable
+  max-issues-per-linter: 100
