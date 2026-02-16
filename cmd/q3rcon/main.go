@@ -86,46 +86,54 @@ func run() (func(), error) {
 		)
 	}
 
-	rcon, err := connectRcon(host, port, rconpass)
+	client, closer, err := connectRcon(host, port, rconpass)
 	if err != nil {
-		return nil, err
-	}
-	defer rcon.Close()
-
-	if !interactive {
-		runCommands(flag.Args(), rcon)
-		return nil, nil
+		return nil, fmt.Errorf("failed to connect to rcon: %w", err)
 	}
 
-	fmt.Printf("Enter 'Q' to exit.\n>> ")
-	err = interactiveMode(rcon, os.Stdin)
-	if err != nil {
-		return nil, err
+	if interactive {
+		fmt.Printf("Enter 'Q' to exit.\n>> ")
+		err := interactiveMode(client, os.Stdin)
+		if err != nil {
+			return closer, fmt.Errorf("interactive mode error: %w", err)
+		}
+		return closer, nil
 	}
-	return nil, nil
+
+	commands := flag.Args()
+	if len(commands) == 0 {
+		log.Debug("no commands provided, defaulting to 'status'")
+		commands = append(commands, "status")
+	}
+	runCommands(client, commands)
+
+	return closer, nil
 }
 
-func connectRcon(host string, port int, password string) (*q3rcon.Rcon, error) {
-	rcon, err := q3rcon.New(host, port, password, q3rcon.WithTimeouts(map[string]time.Duration{
+func connectRcon(host string, port int, password string) (*q3rcon.Rcon, func(), error) {
+	client, err := q3rcon.New(host, port, password, q3rcon.WithTimeouts(map[string]time.Duration{
 		"map":         time.Second,
 		"map_rotate":  time.Second,
 		"map_restart": time.Second,
 	}))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return rcon, nil
+
+	closer := func() {
+		if err := client.Close(); err != nil {
+			log.Error(err)
+		}
+	}
+
+	return client, closer, nil
 }
 
 // runCommands runs the commands given in the flag.Args slice.
 // If no commands are given, it defaults to running the "status" command.
-func runCommands(commands []string, rcon *q3rcon.Rcon) {
-	if len(commands) == 0 {
-		commands = append(commands, "status")
-	}
-
+func runCommands(client *q3rcon.Rcon, commands []string) {
 	for _, cmd := range commands {
-		resp, err := rcon.Send(cmd)
+		resp, err := client.Send(cmd)
 		if err != nil {
 			log.Error(err)
 			continue
@@ -135,7 +143,7 @@ func runCommands(commands []string, rcon *q3rcon.Rcon) {
 }
 
 // interactiveMode continuously reads from input until a quit signal is given.
-func interactiveMode(rcon *q3rcon.Rcon, input io.Reader) error {
+func interactiveMode(client *q3rcon.Rcon, input io.Reader) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		cmd := scanner.Text()
@@ -143,7 +151,7 @@ func interactiveMode(rcon *q3rcon.Rcon, input io.Reader) error {
 			return nil
 		}
 
-		resp, err := rcon.Send(cmd)
+		resp, err := client.Send(cmd)
 		if err != nil {
 			log.Error(err)
 			continue

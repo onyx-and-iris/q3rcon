@@ -140,6 +140,6 @@ func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan
 	}
 }
 
-func (r Rcon) Close() {
-	r.conn.Close()
+func (r Rcon) Close() error {
+	return r.conn.Close()
 }
