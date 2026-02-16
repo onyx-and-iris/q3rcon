@@ -9,7 +9,7 @@ vars:
   LINUX: '{{.BIN_DIR}}/{{.PROGRAM}}_linux_amd64'
   MACOS: '{{.BIN_DIR}}/{{.PROGRAM}}_darwin_amd64'
   GIT_COMMIT:
-    sh: git log -n 1 --format=%h
+    sh: 'git describe --tags $(git rev-list --tags --max-count=1)'
 
 tasks:
   default:
@@ -39,19 +39,19 @@ tasks:
   build-windows:
     desc: Build the q3rcon project for Windows
     cmds:
-      - GOOS=windows GOARCH=amd64 go build -o {{.WINDOWS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+      - GOOS=windows GOARCH=amd64 go build -o {{.WINDOWS}} -ldflags="-X main.version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
     internal: true
 
   build-linux:
     desc: Build the q3rcon project for Linux
     cmds:
-      - GOOS=linux GOARCH=amd64 go build -o {{.LINUX}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+      - GOOS=linux GOARCH=amd64 go build -o {{.LINUX}} -ldflags="-X main.version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
     internal: true
 
   build-macos:
     desc: Build the q3rcon project for macOS
     cmds:
-      - GOOS=darwin GOARCH=amd64 go build -o {{.MACOS}} -ldflags="-X main.Version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
+      - GOOS=darwin GOARCH=amd64 go build -o {{.MACOS}} -ldflags="-X main.version={{.GIT_COMMIT}}" ./cmd/{{.PROGRAM}}/
     internal: true
 
   test:

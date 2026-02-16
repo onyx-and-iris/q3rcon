@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 
 	"github.com/onyx-and-iris/q3rcon"
 )
+
+var version string // Version will be set at build time
 
 func main() {
 	var exitCode int
@@ -42,6 +45,7 @@ func run() (func(), error) {
 		rconpass    string
 		interactive bool
 		loglevel    string
+		versionFlag bool
 	)
 
 	flag.StringVar(&host, "host", "localhost", "hostname of the gameserver")
@@ -67,7 +71,15 @@ func run() (func(), error) {
 	flag.StringVar(&loglevel, "loglevel", "warn", "log level")
 	flag.StringVar(&loglevel, "l", "warn", "log level (shorthand)")
 
+	flag.BoolVar(&versionFlag, "version", false, "print version information and exit")
+	flag.BoolVar(&versionFlag, "v", false, "print version information and exit (shorthand)")
+
 	flag.Parse()
+
+	if versionFlag {
+		fmt.Printf("q3rcon version: %s\n", versionFromBuild())
+		return nil, nil
+	}
 
 	level, err := log.ParseLevel(loglevel)
 	if err != nil {
@@ -108,6 +120,18 @@ func run() (func(), error) {
 	runCommands(client, commands)
 
 	return closer, nil
+}
+
+// versionFromBuild retrieves the version information from the build metadata.
+func versionFromBuild() string {
+	if version == "" {
+		info, ok := debug.ReadBuildInfo()
+		if !ok {
+			return "(unable to read build info)"
+		}
+		version = strings.Split(info.Main.Version, "-")[0]
+	}
+	return version
 }
 
 func connectRcon(host string, port int, password string) (*q3rcon.Rcon, func(), error) {
