@@ -11,12 +11,23 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
-# [0.4.1] - 2026-02-17
+# [0.5.0] - 2026-02-17
+
+### Added
+
+- CLI configuration can be managed through env vars, see [Environment Variables](https://github.com/onyx-and-iris/q3rcon?tab=readme-ov-file#environment-variables) under Configuration in README.
+
+### Changed
+
+- The CLI now supports `--long` and `-short` style flags. Several examples in README.
+- `--help` output has been improved.
+
+
+# [0.4.1] - 2026-02-15
 
 ### Added
 
 - macos build to releases
-- CLI configuration can be managed through env vars, see [Environment Variables](https://github.com/onyx-and-iris/q3rcon?tab=readme-ov-file#environment-variables) under Configuration in README.
 
 ### Changed
 
