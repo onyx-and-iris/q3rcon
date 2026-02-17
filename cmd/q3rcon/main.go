@@ -103,7 +103,7 @@ func run() (func(), error) {
 	)
 	switch {
 	case errors.Is(err, ff.ErrHelp):
-		fmt.Fprintf(os.Stderr, "%s\n", ffhelp.Flags(fs, "q3rcon [flags] <vban commands>"))
+		fmt.Fprintf(os.Stderr, "%s\n", ffhelp.Flags(fs, "q3rcon [flags] <rcon commands>"))
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf("failed to parse flags: %w", err)
