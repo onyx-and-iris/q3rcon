@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -138,7 +137,7 @@ func run() (func(), error) {
 		return closer, nil
 	}
 
-	commands := flag.Args()
+	commands := fs.GetArgs()
 	if len(commands) == 0 {
 		log.Debug("no commands provided, defaulting to 'status'")
 		commands = append(commands, "status")
