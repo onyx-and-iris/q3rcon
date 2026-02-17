@@ -104,7 +104,7 @@ rcon, err := q3rcon.New(
 ### Install
 
 ```console
-go install github.com/onyx-and-iris/q3rcon/cmd/q3rcon
+go install github.com/onyx-and-iris/q3rcon/cmd/q3rcon@latest
 ```
 
 ### Configuration
