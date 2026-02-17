@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -11,11 +12,40 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/peterbourgon/ff/v4"
+	"github.com/peterbourgon/ff/v4/ffhelp"
 
 	"github.com/onyx-and-iris/q3rcon"
 )
 
 var version string // Version will be set at build time
+
+type Flags struct {
+	Host        string
+	Port        int
+	Rconpass    string
+	Interactive bool
+	LogLevel    string
+	Version     bool
+}
+
+func (f Flags) Validate() error {
+	if f.Port < 1024 || f.Port > 65535 {
+		return fmt.Errorf(
+			"invalid port value, got: (%d) expected: in range 1024-65535",
+			f.Port,
+		)
+	}
+
+	if len(f.Rconpass) < 8 {
+		return fmt.Errorf(
+			"invalid rcon password, got: (%s) expected: at least 8 characters",
+			f.Rconpass,
+		)
+	}
+
+	return nil
+}
 
 func main() {
 	var exitCode int
@@ -39,71 +69,67 @@ func main() {
 
 // run executes the main logic of the application and returns a cleanup function and an error if any.
 func run() (func(), error) {
-	var (
-		host        string
-		port        int
-		rconpass    string
-		interactive bool
-		loglevel    string
-		versionFlag bool
-	)
+	var flags Flags
 
-	flag.StringVar(&host, "host", "localhost", "hostname of the gameserver")
-	flag.StringVar(&host, "H", "localhost", "hostname of the gameserver (shorthand)")
-	flag.IntVar(&port, "port", 28960, "port on which the gameserver resides, default is 28960")
-	flag.IntVar(
-		&port,
-		"p",
+	fs := ff.NewFlagSet("q3rcon - A command-line RCON client for Quake 3 Arena")
+	fs.StringVar(&flags.Host, 'H', "host", "localhost", "hostname of the gameserver")
+	fs.IntVar(
+		&flags.Port,
+		'p',
+		"port",
 		28960,
-		"port on which the gameserver resides, default is 28960 (shorthand)",
+		"port on which the gameserver resides, default is 28960",
 	)
-	flag.StringVar(&rconpass, "rconpass", os.Getenv("RCON_PASS"), "rcon password of the gameserver")
-	flag.StringVar(
-		&rconpass,
-		"r",
-		os.Getenv("RCON_PASS"),
-		"rcon password of the gameserver (shorthand)",
+	fs.StringVar(
+		&flags.Rconpass,
+		'r',
+		"rconpass",
+		"",
+		"rcon password of the gameserver",
 	)
 
-	flag.BoolVar(&interactive, "interactive", false, "run in interactive mode")
-	flag.BoolVar(&interactive, "i", false, "run in interactive mode (shorthand)")
+	fs.BoolVar(&flags.Interactive, 'i', "interactive", "run in interactive mode")
+	fs.StringVar(
+		&flags.LogLevel,
+		'l',
+		"loglevel",
+		"info",
+		"Log level (debug, info, warn, error, fatal, panic)",
+	)
+	fs.BoolVar(&flags.Version, 'v', "version", "print version information and exit")
 
-	flag.StringVar(&loglevel, "loglevel", "warn", "log level")
-	flag.StringVar(&loglevel, "l", "warn", "log level (shorthand)")
+	err := ff.Parse(fs, os.Args[1:],
+		ff.WithEnvVarPrefix("Q3RCON"),
+	)
+	switch {
+	case errors.Is(err, ff.ErrHelp):
+		fmt.Fprintf(os.Stderr, "%s\n", ffhelp.Flags(fs, "q3rcon [flags] <vban commands>"))
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("failed to parse flags: %w", err)
+	}
 
-	flag.BoolVar(&versionFlag, "version", false, "print version information and exit")
-	flag.BoolVar(&versionFlag, "v", false, "print version information and exit (shorthand)")
-
-	flag.Parse()
-
-	if versionFlag {
+	if flags.Version {
 		fmt.Printf("q3rcon version: %s\n", versionFromBuild())
 		return nil, nil
 	}
 
-	level, err := log.ParseLevel(loglevel)
+	if err := flags.Validate(); err != nil {
+		return nil, err
+	}
+
+	level, err := log.ParseLevel(flags.LogLevel)
 	if err != nil {
-		return nil, fmt.Errorf("invalid log level: %s", loglevel)
+		return nil, fmt.Errorf("invalid log level: %s", flags.LogLevel)
 	}
 	log.SetLevel(level)
 
-	if port < 1024 || port > 65535 {
-		return nil, fmt.Errorf("invalid port value, got: (%d) expected: in range 1024-65535", port)
-	}
-
-	if len(rconpass) < 8 {
-		return nil, fmt.Errorf(
-			"invalid rcon password, got: (%s) expected: at least 8 characters",
-			rconpass,
-		)
-	}
-
-	client, closer, err := connectRcon(host, port, rconpass)
+	client, closer, err := connectRcon(flags.Host, flags.Port, flags.Rconpass)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to rcon: %w", err)
 	}
 
-	if interactive {
+	if flags.Interactive {
 		fmt.Printf("Enter 'Q' to exit.\n>> ")
 		err := interactiveMode(client, os.Stdin)
 		if err != nil {
