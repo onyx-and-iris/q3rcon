@@ -71,7 +71,7 @@ func main() {
 func run() (func(), error) {
 	var flags Flags
 
-	fs := ff.NewFlagSet("q3rcon - A command-line RCON client for Quake 3 Arena")
+	fs := ff.NewFlagSet("q3rcon - A command-line RCON client for Q3 Rcon compatible game servers")
 	fs.StringVar(&flags.Host, 'H', "host", "localhost", "hostname of the gameserver")
 	fs.IntVar(
 		&flags.Port,
