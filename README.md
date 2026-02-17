@@ -96,7 +96,7 @@ rcon, err := q3rcon.New(
 Pass `host`, `port` and `rconpass` as flags, for example:
 
 ```
-q3rcon -h=localhost -p=30000 -r="rconpassword" "mapname"
+q3rcon -H=localhost -p=30000 -r="rconpassword" "mapname"
 ```
 
 -   `host` defaults to "localhost"

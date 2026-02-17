@@ -49,7 +49,7 @@ func run() (func(), error) {
 	)
 
 	flag.StringVar(&host, "host", "localhost", "hostname of the gameserver")
-	flag.StringVar(&host, "h", "localhost", "hostname of the gameserver (shorthand)")
+	flag.StringVar(&host, "H", "localhost", "hostname of the gameserver (shorthand)")
 	flag.IntVar(&port, "port", 28960, "port on which the gameserver resides, default is 28960")
 	flag.IntVar(
 		&port,
@@ -66,7 +66,7 @@ func run() (func(), error) {
 	)
 
 	flag.BoolVar(&interactive, "interactive", false, "run in interactive mode")
-	flag.BoolVar(&interactive, "i", false, "run in interactive mode")
+	flag.BoolVar(&interactive, "i", false, "run in interactive mode (shorthand)")
 
 	flag.StringVar(&loglevel, "loglevel", "warn", "log level")
 	flag.StringVar(&loglevel, "l", "warn", "log level (shorthand)")
