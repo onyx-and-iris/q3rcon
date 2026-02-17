@@ -151,7 +151,7 @@ If interactive mode is enabled, any arguments sent on the command line will be i
 
 The included CLI is a generic implementation, while it can be used out of the box you may find that some requests result in fragmented responses. The solution is to implement your own version, adjusting the timings with the functional options as detailed above.
 
-Since you can include the q3rcon package into your own CLI/package you can easily make your own modifications, for example, I added [colour to the terminal][status] and [reformatted some of the responses][mapname].
+Since you can include the q3rcon package into your own CLI/package you can easily make your own modifications, for example, I added [colour to the terminal][status] and [tabulated some of the responses][mapname].
 
 ---
 
