@@ -17,9 +17,15 @@ Quake3 Rcon works by firing UDP packets to the game server port, responses may b
 
 Rcon itself is insecure and each packet includes the password so I don't suggest using it remotely. If you have direct access to the server then SSH in first, then use this tool locally.
 
-## Use
+---
 
-`go get github.com/onyx-and-iris/q3rcon`
+## Package
+
+#### Use
+
+```console
+go get github.com/onyx-and-iris/q3rcon
+```
 
 ```go
 package main
@@ -91,12 +97,24 @@ rcon, err := q3rcon.New(
 	q3rcon.WithTimeouts(timeouts))
 ```
 
+---
+
 ## Command line
 
-Pass `host`, `port` and `rconpass` as flags, for example:
+### Install
 
+```console
+go install github.com/onyx-and-iris/q3rcon/cmd/q3rcon
 ```
-q3rcon -H=localhost -p=30000 -r="rconpassword" "mapname"
+
+### Configuration
+
+#### Flags
+
+Pass `--host`, `--port` and `--rconpass` as flags, for example:
+
+```console
+q3rcon --host=localhost --port=30000 --rconpass="rconpassword" "mapname"
 ```
 
 -   `host` defaults to "localhost"
@@ -105,25 +123,41 @@ q3rcon -H=localhost -p=30000 -r="rconpassword" "mapname"
 
 Arguments following the flags will be sent as rcon commands. You may send multiple arguments.
 
-#### Interactive mode
+#### Environment Variables
+
+example .envrc:
+
+```bash
+#!/usr/bin/env bash
+
+export Q3RCON_HOST="localhost"
+export Q3RCON_PORT=28960
+export Q3RCON_RCONPASS="rconpassword"
+```
+
+### Interactive mode
 
 Pass `interactive (-i shorthand)` flag to enable interactive mode, for example:
 
-```bash
-q3rcon -h=localhost -p=30000 -r="rconpassword" -i
+```console
+q3rcon -H=localhost -p=30000 -r="rconpassword" -i
 ```
 
 If interactive mode is enabled, any arguments sent on the command line will be ignored.
 
+---
+
 ## Your own implementation
 
-The included CLI is a generic implementation, while it can be used out of the box you may find that some requests result in fragmented responses. The solution is to implement your own version, adjusting the timings with the functional options as detailed above. I could have increased the default timeouts but that would add unnecessary delay for most requests, so I decided to leave those details to the users of the package.
+The included CLI is a generic implementation, while it can be used out of the box you may find that some requests result in fragmented responses. The solution is to implement your own version, adjusting the timings with the functional options as detailed above.
 
-Since you can include the q3rcon package into your own package you can easily make your own modifications, for example, I added [colour to the terminal][status] and [reformatted some of the responses][mapname].
+Since you can include the q3rcon package into your own CLI/package you can easily make your own modifications, for example, I added [colour to the terminal][status] and [reformatted some of the responses][mapname].
+
+---
 
 ## Logging
 
-The `-loglevel` flag allows you to control the verbosity of the application's logging output. 
+The `--loglevel` flag allows you to control the verbosity of the application's logging output. 
 
 Acceptable values for this flag are:
 
@@ -137,8 +171,8 @@ Acceptable values for this flag are:
 
 For example, to set the log level to `debug`, you can use:
 
-```bash
-q3rcon -p=28960 -r="rconpassword" -loglevel=debug -i
+```console
+q3rcon -H=localhost -p=28960 -r="rconpassword" -l=debug -i
 ```
 
 The default log level is `warn` if the flag is not specified.
