@@ -11,7 +11,7 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
-# [0.5.0] - 2026-02-17
+# [0.5.1] - 2026-02-18
 
 ### Added
 
@@ -21,6 +21,7 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 - The CLI now supports `--long` and `-short` style flags. Several examples in README.
 - `--help` output has been improved.
+- Colour codes have been removed from CLI output. This makes the responses easier to read.
 
 
 # [0.4.1] - 2026-02-15
