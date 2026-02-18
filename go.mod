@@ -5,7 +5,6 @@ go 1.25.0
 require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/peterbourgon/ff/v4 v4.0.0-beta.1
-	github.com/sirupsen/logrus v1.9.3
 )
 
 require (

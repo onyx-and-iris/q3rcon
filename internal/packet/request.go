@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/charmbracelet/log"
 )
 
 const bufSz = 512
@@ -24,13 +24,13 @@ func NewRequest(password string) Request {
 }
 
 func (r Request) Header() []byte {
-	return append(r.magic, []byte("rcon")...)
+	return append(r.magic, "rcon"...)
 }
 
 func (r Request) Encode(cmd string) []byte {
 	r.buf.Reset()
 	r.buf.Write(r.Header())
 	r.buf.WriteString(fmt.Sprintf(" %s %s", r.password, cmd))
-	log.Tracef("Encoded request: %s", r.buf.String())
+	log.Debugf("Encoded request: %s", r.buf.String())
 	return r.buf.Bytes()
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/charmbracelet/log"
 
 	"github.com/onyx-and-iris/q3rcon/internal/conn"
 	"github.com/onyx-and-iris/q3rcon/internal/packet"

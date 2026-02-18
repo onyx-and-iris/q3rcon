@@ -9,5 +9,5 @@ func NewResponse() Response {
 }
 
 func (r Response) Header() []byte {
-	return append(r.magic, []byte("print\n")...)
+	return append(r.magic, "print\n"...)
 }
