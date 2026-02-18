@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -188,7 +189,7 @@ func runCommands(client *q3rcon.Rcon, commands []string) {
 			log.Error(err)
 			continue
 		}
-		fmt.Print(resp)
+		fmt.Print(removeColourCodes(resp))
 	}
 }
 
@@ -206,11 +207,18 @@ func interactiveMode(client *q3rcon.Rcon, input io.Reader) error {
 			log.Error(err)
 			continue
 		}
-		fmt.Printf("%s>> ", resp)
+		fmt.Printf("%s>> ", removeColourCodes(resp))
 	}
 
 	if scanner.Err() != nil {
 		return scanner.Err()
 	}
 	return nil
+}
+
+var colourCodeRegex = regexp.MustCompile(`\^[0-9]`)
+
+// removeColourCodes removes '\^[0-9]' colour codes from the input string.
+func removeColourCodes(s string) string {
+	return colourCodeRegex.ReplaceAllString(s, "")
 }
