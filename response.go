@@ -12,10 +12,10 @@ func newResponse() response {
 	return response{}
 }
 
-func (r response) IsValid(buf []byte) bool {
+func (r response) isValid(buf []byte) bool {
 	return len(buf) > len(responseHeader) && bytes.HasPrefix(buf, []byte(responseHeader))
 }
 
-func (r response) Decode(buf []byte) string {
+func (r response) decode(buf []byte) string {
 	return string(buf[len(responseHeader):])
 }

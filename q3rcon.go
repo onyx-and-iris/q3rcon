@@ -14,12 +14,12 @@ import (
 const respBufSiz = 2048
 
 type encoder interface {
-	Encode(cmd string) ([]byte, error)
+	encode(cmd string) ([]byte, error)
 }
 
 type decoder interface {
-	IsValid(buf []byte) bool
-	Decode(buf []byte) string
+	isValid(buf []byte) bool
+	decode(buf []byte) string
 }
 
 type Rcon struct {
@@ -101,7 +101,7 @@ func (r Rcon) Send(cmdWithArgs string) (string, error) {
 
 	go r.listen(timeout, respChan, errChan)
 
-	encodedCmd, err := r.request.Encode(cmdWithArgs)
+	encodedCmd, err := r.request.encode(cmdWithArgs)
 	if err != nil {
 		return "", fmt.Errorf("error encoding command: %w", err)
 	}
@@ -153,8 +153,8 @@ func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan
 				}
 			}
 
-			if r.response.IsValid(respBuf[:rlen]) {
-				sb.WriteString(r.response.Decode(respBuf[:rlen]))
+			if r.response.isValid(respBuf[:rlen]) {
+				sb.WriteString(r.response.decode(respBuf[:rlen]))
 			}
 		}
 	}

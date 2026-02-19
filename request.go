@@ -23,7 +23,7 @@ func newRequest(password string) request {
 	}
 }
 
-func (r request) Encode(cmd string) ([]byte, error) {
+func (r request) encode(cmd string) ([]byte, error) {
 	if cmd == "" {
 		return nil, errors.New("command cannot be empty")
 	}
