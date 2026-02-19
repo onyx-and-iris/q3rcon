@@ -1,9 +1,8 @@
-package conn
+package q3rcon
 
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/charmbracelet/log"
 )
@@ -12,23 +11,23 @@ type UDPConn struct {
 	conn *net.UDPConn
 }
 
-func New(host string, port int) (UDPConn, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%d", host, port))
+func newUDPConn(host string, port int) (*UDPConn, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp4", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
 	if err != nil {
-		return UDPConn{}, err
+		return nil, err
 	}
 	conn, err := net.DialUDP("udp4", nil, udpAddr)
 	if err != nil {
-		return UDPConn{}, err
+		return nil, err
 	}
 	log.Infof("Outgoing address %s", conn.RemoteAddr())
 
-	return UDPConn{
+	return &UDPConn{
 		conn: conn,
 	}, nil
 }
 
-func (c UDPConn) Write(buf []byte) (int, error) {
+func (c *UDPConn) Write(buf []byte) (int, error) {
 	n, err := c.conn.Write(buf)
 	if err != nil {
 		return 0, err
@@ -37,8 +36,7 @@ func (c UDPConn) Write(buf []byte) (int, error) {
 	return n, nil
 }
 
-func (c UDPConn) ReadUntil(timeout time.Time, buf []byte) (int, error) {
-	c.conn.SetReadDeadline(timeout)
+func (c *UDPConn) Read(buf []byte) (int, error) {
 	rlen, _, err := c.conn.ReadFromUDP(buf)
 	if err != nil {
 		return 0, err
@@ -46,7 +44,7 @@ func (c UDPConn) ReadUntil(timeout time.Time, buf []byte) (int, error) {
 	return rlen, nil
 }
 
-func (c UDPConn) Close() error {
+func (c *UDPConn) Close() error {
 	err := c.conn.Close()
 	if err != nil {
 		return err

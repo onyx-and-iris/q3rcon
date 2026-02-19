@@ -1,24 +1,31 @@
 package q3rcon
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"net"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
-
-	"github.com/onyx-and-iris/q3rcon/internal/conn"
-	"github.com/onyx-and-iris/q3rcon/internal/packet"
 )
 
 const respBufSiz = 2048
 
+type encoder interface {
+	Encode(cmd string) ([]byte, error)
+}
+
+type decoder interface {
+	IsValid(buf []byte) bool
+	Decode(buf []byte) string
+}
+
 type Rcon struct {
-	conn     conn.UDPConn
-	request  packet.Request
-	response packet.Response
+	conn     io.ReadWriteCloser
+	request  encoder
+	response decoder
 
 	loginTimeout   time.Duration
 	defaultTimeout time.Duration
@@ -30,15 +37,15 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 		return nil, errors.New("no password provided")
 	}
 
-	conn, err := conn.New(host, port)
+	conn, err := newUDPConn(host, port)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating UDP connection: %w", err)
 	}
 
 	r := &Rcon{
 		conn:     conn,
-		request:  packet.NewRequest(password),
-		response: packet.NewResponse(),
+		request:  newRequest(password),
+		response: newResponse(),
 
 		loginTimeout:   5 * time.Second,
 		defaultTimeout: 20 * time.Millisecond,
@@ -50,7 +57,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 	}
 
 	if err = r.login(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error logging in: %w", err)
 	}
 
 	return r, nil
@@ -65,7 +72,7 @@ func (r Rcon) login() error {
 		default:
 			resp, err := r.Send("login")
 			if err != nil {
-				return err
+				return fmt.Errorf("error sending login command: %w", err)
 			}
 			if resp == "" {
 				continue
@@ -94,9 +101,14 @@ func (r Rcon) Send(cmdWithArgs string) (string, error) {
 
 	go r.listen(timeout, respChan, errChan)
 
-	_, err := r.conn.Write(r.request.Encode(cmdWithArgs))
+	encodedCmd, err := r.request.Encode(cmdWithArgs)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error encoding command: %w", err)
+	}
+
+	_, err = r.conn.Write(encodedCmd)
+	if err != nil {
+		return "", fmt.Errorf("error writing command to connection: %w", err)
 	}
 
 	select {
@@ -118,7 +130,17 @@ func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan
 			respChan <- sb.String()
 			return
 		default:
-			rlen, err := r.conn.ReadUntil(time.Now().Add(timeout), respBuf)
+			c, ok := r.conn.(*UDPConn)
+			if !ok {
+				errChan <- errors.New("connection is not a UDPConn")
+				return
+			}
+			err := c.conn.SetReadDeadline(time.Now().Add(timeout))
+			if err != nil {
+				errChan <- fmt.Errorf("error setting read deadline: %w", err)
+				return
+			}
+			rlen, err := r.conn.Read(respBuf)
 			if err != nil {
 				e, ok := err.(net.Error)
 				if ok {
@@ -131,10 +153,8 @@ func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan
 				}
 			}
 
-			if rlen > len(r.response.Header()) {
-				if bytes.HasPrefix(respBuf, r.response.Header()) {
-					sb.Write(respBuf[len(r.response.Header()):rlen])
-				}
+			if r.response.IsValid(respBuf[:rlen]) {
+				sb.WriteString(r.response.Decode(respBuf[:rlen]))
 			}
 		}
 	}
