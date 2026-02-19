@@ -205,6 +205,7 @@ func interactiveMode(client *q3rcon.Rcon, input io.Reader) error {
 		resp, err := client.Send(cmd)
 		if err != nil {
 			log.Error(err)
+			fmt.Print(">> ")
 			continue
 		}
 		fmt.Printf("%s>> ", removeColourCodes(resp))
