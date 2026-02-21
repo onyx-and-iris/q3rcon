@@ -11,7 +11,7 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
-# [0.5.2] - 2026-02-26
+# [0.5.3] - 2026-02-26
 
 ### Added
 
