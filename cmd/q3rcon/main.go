@@ -48,6 +48,8 @@ func (f Flags) Validate() error {
 	return nil
 }
 
+var reColourCodes = regexp.MustCompile(`\^[0-9]`)
+
 func main() {
 	var exitCode int
 
@@ -252,13 +254,6 @@ func runCommand(ctx *context, cmd string) error {
 	if ctx.sm.Running() {
 		ctx.sm.Stop()
 	}
-	fmt.Print(removeColourCodes(resp))
+	fmt.Print(reColourCodes.ReplaceAllString(resp, ""))
 	return nil
-}
-
-var colourCodeRegex = regexp.MustCompile(`\^[0-9]`)
-
-// removeColourCodes removes '\^[0-9]' colour codes from the input string.
-func removeColourCodes(s string) string {
-	return colourCodeRegex.ReplaceAllString(s, "")
 }
