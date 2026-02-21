@@ -249,7 +249,9 @@ func runCommand(ctx *context, cmd string) error {
 	if err != nil {
 		return fmt.Errorf("failed to run command '%s': %w", cmd, err)
 	}
-	ctx.sm.Stop()
+	if ctx.sm.Running() {
+		ctx.sm.Stop()
+	}
 	fmt.Print(removeColourCodes(resp))
 	return nil
 }
