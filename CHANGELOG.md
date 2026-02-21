@@ -11,6 +11,12 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.5.2] - 2026-02-26
+
+### Added
+
+- Spinner for long running CLI commands.
+
 # [0.5.1] - 2026-02-18
 
 ### Added
