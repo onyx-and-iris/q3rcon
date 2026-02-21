@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/chelnak/ysmrr"
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
 
@@ -65,6 +66,13 @@ func main() {
 		log.Error(err)
 		exitCode = 1
 	}
+}
+
+type context struct {
+	client   *q3rcon.Rcon
+	timeouts map[string]time.Duration
+	in       io.Reader
+	sm       ysmrr.SpinnerManager
 }
 
 // run executes the main logic of the application and returns a cleanup function and an error if any.
@@ -124,14 +132,31 @@ func run() (func(), error) {
 	}
 	log.SetLevel(level)
 
-	client, closer, err := connectRcon(flags.Host, flags.Port, flags.Rconpass)
+	timeouts := map[string]time.Duration{
+		"map":         time.Second,
+		"map_rotate":  time.Second,
+		"map_restart": time.Second,
+	}
+	log.Debugf("using timeouts: %v", timeouts)
+
+	client, closer, err := connectRcon(flags.Host, flags.Port, flags.Rconpass, timeouts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to rcon: %w", err)
 	}
 
+	sm := ysmrr.NewSpinnerManager()
+	sm.AddSpinner("")
+
+	ctx := &context{
+		client:   client,
+		timeouts: timeouts,
+		in:       os.Stdin,
+		sm:       sm,
+	}
+
 	if flags.Interactive {
 		fmt.Printf("Enter 'Q' to exit.\n>> ")
-		err := interactiveMode(client, os.Stdin)
+		err := interactiveMode(ctx)
 		if err != nil {
 			return closer, fmt.Errorf("interactive mode error: %w", err)
 		}
@@ -143,7 +168,7 @@ func run() (func(), error) {
 		log.Debug("no commands provided, defaulting to 'status'")
 		commands = append(commands, "status")
 	}
-	runCommands(client, commands)
+	runCommands(ctx, commands)
 
 	return closer, nil
 }
@@ -161,12 +186,13 @@ func versionFromBuild() string {
 	return strings.Split(info.Main.Version, "-")[0]
 }
 
-func connectRcon(host string, port int, password string) (*q3rcon.Rcon, func(), error) {
-	client, err := q3rcon.New(host, port, password, q3rcon.WithTimeouts(map[string]time.Duration{
-		"map":         time.Second,
-		"map_rotate":  time.Second,
-		"map_restart": time.Second,
-	}))
+func connectRcon(
+	host string,
+	port int,
+	password string,
+	timeouts map[string]time.Duration,
+) (*q3rcon.Rcon, func(), error) {
+	client, err := q3rcon.New(host, port, password, q3rcon.WithTimeouts(timeouts))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -180,40 +206,51 @@ func connectRcon(host string, port int, password string) (*q3rcon.Rcon, func(), 
 	return client, closer, nil
 }
 
-// runCommands runs the commands given in the flag.Args slice.
-// If no commands are given, it defaults to running the "status" command.
-func runCommands(client *q3rcon.Rcon, commands []string) {
-	for _, cmd := range commands {
-		resp, err := client.Send(cmd)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		fmt.Print(removeColourCodes(resp))
-	}
-}
-
 // interactiveMode continuously reads from input until a quit signal is given.
-func interactiveMode(client *q3rcon.Rcon, input io.Reader) error {
-	scanner := bufio.NewScanner(input)
+func interactiveMode(ctx *context) error {
+	scanner := bufio.NewScanner(ctx.in)
 	for scanner.Scan() {
 		cmd := scanner.Text()
 		if strings.EqualFold(cmd, "Q") {
 			return nil
 		}
 
-		resp, err := client.Send(cmd)
-		if err != nil {
-			log.Error(err)
-			fmt.Print(">> ")
-			continue
+		if err := runCommand(ctx, cmd); err != nil {
+			fmt.Printf("Error: %v\n", err)
 		}
-		fmt.Printf("%s>> ", removeColourCodes(resp))
+		fmt.Printf(">> ")
 	}
 
 	if scanner.Err() != nil {
 		return scanner.Err()
 	}
+	return nil
+}
+
+// runCommands executes a list of commands sequentially and prints any errors encountered.
+func runCommands(ctx *context, commands []string) {
+	for _, cmd := range commands {
+		if err := runCommand(ctx, cmd); err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+	}
+}
+
+// runCommand sends a command to the RCON client and prints the response.
+// If the command is in the timeouts map, it starts a spinner until the response is received.
+func runCommand(ctx *context, cmd string) error {
+	before, _, _ := strings.Cut(cmd, " ")
+	_, ok := ctx.timeouts[before]
+	if ok {
+		ctx.sm.Start()
+	}
+
+	resp, err := ctx.client.Send(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to run command '%s': %w", cmd, err)
+	}
+	ctx.sm.Stop()
+	fmt.Print(removeColourCodes(resp))
 	return nil
 }
 
