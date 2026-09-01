@@ -41,6 +41,7 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 	if err != nil {
 		return nil, fmt.Errorf("error creating UDP connection: %w", err)
 	}
+	log.Infof("Rcon outgoing address %s", conn.conn.RemoteAddr())
 
 	r := &Rcon{
 		conn:     conn,

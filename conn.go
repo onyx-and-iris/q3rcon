@@ -3,8 +3,6 @@ package q3rcon
 import (
 	"fmt"
 	"net"
-
-	"github.com/charmbracelet/log"
 )
 
 type UDPConn struct {
@@ -20,7 +18,6 @@ func newUDPConn(host string, port int) (*UDPConn, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Outgoing address %s", conn.RemoteAddr())
 
 	return &UDPConn{
 		conn: conn,
