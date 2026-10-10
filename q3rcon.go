@@ -1,6 +1,7 @@
 package q3rcon
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -41,13 +42,13 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 	if err != nil {
 		return nil, fmt.Errorf("error creating UDP connection: %w", err)
 	}
+
 	log.Infof("Rcon outgoing address %s", conn.conn.RemoteAddr())
 
 	r := &Rcon{
-		conn:     conn,
-		request:  newRequest(password),
-		response: newResponse(),
-
+		conn:           conn,
+		request:        newRequest(password),
+		response:       newResponse(),
 		loginTimeout:   5 * time.Second,
 		defaultTimeout: 20 * time.Millisecond,
 		timeouts:       make(map[string]time.Duration),
@@ -57,48 +58,46 @@ func New(host string, port int, password string, options ...Option) (*Rcon, erro
 		o(r)
 	}
 
-	if err = r.login(); err != nil {
+	if err := r.login(context.Background()); err != nil {
 		return nil, fmt.Errorf("error logging in: %w", err)
 	}
 
 	return r, nil
 }
 
-func (r Rcon) login() error {
-	timeout := time.After(r.loginTimeout)
+func (r *Rcon) login(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, r.loginTimeout)
+	defer cancel()
+
 	for {
 		select {
-		case <-timeout:
-			return errors.New("timeout logging in")
+		case <-ctx.Done():
+			return ctx.Err()
 		default:
-			resp, err := r.Send("login")
+			resp, err := r.Exec(ctx, "login")
 			if err != nil {
-				return fmt.Errorf("error sending login command: %w", err)
+				return fmt.Errorf("login send: %w", err)
 			}
 			if resp == "" {
 				continue
 			}
-
 			if strings.Contains(resp, "Bad rcon") {
-				return errors.New("bad rcon password provided")
-			} else {
-				return nil
+				return errors.New("bad rcon password")
 			}
+			return nil
 		}
 	}
 }
 
-func (r Rcon) Send(cmdWithArgs string) (string, error) {
-	cmd, _, _ := strings.Cut(string(cmdWithArgs), " ")
-	timeout, ok := r.timeouts[cmd]
-	if !ok {
-		timeout = r.defaultTimeout
-	} else {
-		log.Debugf("%s in timeouts map, using timeout %v", cmd, timeout)
+func (r Rcon) Exec(ctx context.Context, cmdWithArgs string) (string, error) {
+	cmd, _, _ := strings.Cut(cmdWithArgs, " ")
+	timeout := r.defaultTimeout
+	if t, ok := r.timeouts[cmd]; ok {
+		timeout = t
 	}
 
-	respChan := make(chan string)
-	errChan := make(chan error)
+	respChan := make(chan string, 1)
+	errChan := make(chan error, 1)
 
 	go r.listen(timeout, respChan, errChan)
 
@@ -107,17 +106,22 @@ func (r Rcon) Send(cmdWithArgs string) (string, error) {
 		return "", fmt.Errorf("error encoding command: %w", err)
 	}
 
-	_, err = r.conn.Write(encodedCmd)
-	if err != nil {
+	if _, err = r.conn.Write(encodedCmd); err != nil {
 		return "", fmt.Errorf("error writing command to connection: %w", err)
 	}
 
 	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
 	case err := <-errChan:
 		return "", err
 	case resp := <-respChan:
 		return resp, nil
 	}
+}
+
+func (r Rcon) ExecBackground(cmd string) (string, error) {
+	return r.Exec(context.Background(), cmd)
 }
 
 func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan<- error) {
@@ -136,21 +140,21 @@ func (r Rcon) listen(timeout time.Duration, respChan chan<- string, errChan chan
 				errChan <- errors.New("connection is not a UDPConn")
 				return
 			}
-			err := c.conn.SetReadDeadline(time.Now().Add(timeout))
-			if err != nil {
+
+			if err := c.conn.SetReadDeadline(time.Now().Add(timeout)); err != nil {
 				errChan <- fmt.Errorf("error setting read deadline: %w", err)
 				return
 			}
+
 			rlen, err := r.conn.Read(respBuf)
 			if err != nil {
-				e, ok := err.(net.Error)
-				if ok {
+				if e, ok := err.(net.Error); ok {
 					if e.Timeout() {
 						close(done)
-					} else {
-						errChan <- e
-						return
+						continue
 					}
+					errChan <- e
+					return
 				}
 			}
 

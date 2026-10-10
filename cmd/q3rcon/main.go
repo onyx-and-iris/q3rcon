@@ -70,7 +70,7 @@ func main() {
 	}
 }
 
-type context struct {
+type appContext struct {
 	client   *q3rcon.Rcon
 	timeouts map[string]time.Duration
 	in       io.Reader
@@ -102,7 +102,7 @@ func run() (func(), error) {
 	fs.StringVar(
 		&flags.LogLevel,
 		'l',
-		"loglevel",
+		"log-level",
 		"info",
 		"Log level (debug, info, warn, error, fatal, panic)",
 	)
@@ -149,7 +149,7 @@ func run() (func(), error) {
 	sm := ysmrr.NewSpinnerManager()
 	sm.AddSpinner("")
 
-	ctx := &context{
+	ctx := &appContext{
 		client:   client,
 		timeouts: timeouts,
 		in:       os.Stdin,
@@ -209,7 +209,7 @@ func connectRcon(
 }
 
 // interactiveMode continuously reads from input until a quit signal is given.
-func interactiveMode(ctx *context) error {
+func interactiveMode(ctx *appContext) error {
 	scanner := bufio.NewScanner(ctx.in)
 	for scanner.Scan() {
 		cmd := scanner.Text()
@@ -230,7 +230,7 @@ func interactiveMode(ctx *context) error {
 }
 
 // runCommands executes a list of commands sequentially and prints any errors encountered.
-func runCommands(ctx *context, commands []string) {
+func runCommands(ctx *appContext, commands []string) {
 	for _, cmd := range commands {
 		if err := runCommand(ctx, cmd); err != nil {
 			fmt.Printf("Error: %v\n", err)
@@ -240,20 +240,25 @@ func runCommands(ctx *context, commands []string) {
 
 // runCommand sends a command to the RCON client and prints the response.
 // If the command is in the timeouts map, it starts a spinner until the response is received.
-func runCommand(ctx *context, cmd string) error {
+func runCommand(ctx *appContext, cmd string) error {
 	before, _, _ := strings.Cut(cmd, " ")
 	_, ok := ctx.timeouts[before]
 	if ok {
 		ctx.sm.Start()
 	}
 
-	resp, err := ctx.client.Send(cmd)
+	resp, err := ctx.client.ExecBackground(cmd)
 	if err != nil {
+		if ctx.sm.Running() {
+			ctx.sm.Stop()
+		}
 		return fmt.Errorf("failed to run command '%s': %w", cmd, err)
 	}
+
 	if ctx.sm.Running() {
 		ctx.sm.Stop()
 	}
+
 	fmt.Print(reColourCodes.ReplaceAllString(resp, ""))
 	return nil
 }
