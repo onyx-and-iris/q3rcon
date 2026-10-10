@@ -31,6 +31,7 @@ go get github.com/onyx-and-iris/q3rcon
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -50,13 +51,26 @@ func main() {
 	}
 	defer rcon.Close()
 
-	resp, err := rcon.Send("mapname")
+	resp, err := rcon.Exec(context.Background(), "mapname")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(resp)
 }
 ```
+
+#### `RCON`
+
+##### Exec(ctx context.Context, cmdWithArgs string) (string, error)
+
+Executes a command with a cancellable context. Use this when you need timeout or
+cancellation control.
+
+##### ExecBackground(cmd string) (string, error)
+
+Executes a command without any context. Use this for unconditional, non‑cancellable
+commands that should always run to completion.
+
 
 #### `WithLoginTimeout(timeout time.Duration)`
 
@@ -157,11 +171,10 @@ Since you can include the q3rcon package into your own CLI/package you can easil
 
 ## Logging
 
-The `--loglevel` flag allows you to control the verbosity of the application's logging output. 
+The `--log-level` flag allows you to control the verbosity of the application's logging output. 
 
 Acceptable values for this flag are:
 
-- `trace`
 - `debug`
 - `info`
 - `warn`

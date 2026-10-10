@@ -11,6 +11,21 @@ Before any major/minor/patch bump all unit tests will be run to verify they pass
 
 -   [x]
 
+# [0.7.0] - 2026-10-10
+
+### Changed
+
+Breaking change
+
+- `{rcon}.Send` renamed to `{rcon}.Exec`; it now accepts a cancellation context.
+- Added `{rcon}.ExecBackground` for non‑cancellable execution.
+
+# [0.6.0] - 2026-10-02
+
+### Changed
+
+- updated charm log dependency to v2.
+
 # [0.5.3] - 2026-02-26
 
 ### Added
