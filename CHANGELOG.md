@@ -19,6 +19,7 @@ Breaking change
 
 - `{rcon}.Send` renamed to `{rcon}.Exec`; it now accepts a cancellation context.
 - Added `{rcon}.ExecBackground` for non‑cancellable execution.
+- --loglevel flag renamed to --log-level.
 
 # [0.6.0] - 2026-10-02
 
